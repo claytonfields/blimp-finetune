@@ -101,7 +101,11 @@ if __name__ == "__main__":
                         default = None,
                         type = str,
                         help = "Path to the PyTorch checkpoint.")
-
+    parser.add_argument("-epochs", '-e',
+                        default = 1,
+                        type = str,
+                        required = False,
+                        help = "Number of training epochs")
     args = parser.parse_args()
     model_path = args.model_path
     print(model_path)
