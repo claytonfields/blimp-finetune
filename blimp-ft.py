@@ -112,8 +112,10 @@ if __name__ == "__main__":
 
     if not os.path.exists('output'):
         os.mkdir('output')
-
-    output_path = os.path.join('output',model_path)
+    model_name = os.path.split(model_path)[1]
+    print('model name: ',model_name)
+    output_path = os.path.join('output',model_name)
+    print('output path: ',output_path)
     if os.path.exists(output_path):
         print('output directory already exists')
         exit()
@@ -176,5 +178,6 @@ if __name__ == "__main__":
             acc_string = 'arracy on test set {}'.format(accuracy_score(guesses.indices, targs.cpu()))
             f.write(acc_string)
             print(acc_string)
-    torch.save(model.state_dict(), output_path)
+    save_path = os.path.join(output_path, 'pytorch_model.bin')
+    torch.save(model.state_dict(), save_path)
 
