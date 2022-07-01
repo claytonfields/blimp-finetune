@@ -107,7 +107,14 @@ if __name__ == "__main__":
     print(model_path)
 
     if not os.path.exists('output'):
-        pass
+        os.mkdir('output')
+
+    output_path = os.path.join('output',model_path)
+    if os.path.exists(output_path):
+        print('output directory already exists')
+        exit()
+
+    os.mkdir(output_path)
 
 
     device = 'cuda' if cuda.is_available() else 'cpu'
@@ -153,13 +160,17 @@ if __name__ == "__main__":
     model.to(device)    
 
     optimizer = torch.optim.Adam(params =  model.parameters(), lr=LEARNING_RATE)
-
-    for epoch in range(EPOCHS):
-        loss = train(model, training_loader, optimizer)
-        print(f'Epoch: {epoch}, Loss:  {loss.item()}')  
-        guess, targs = validation(model, dev_loader)
-        guesses = torch.max(guess, dim=1)
-        targets = torch.max(targs, dim=0)
-        print('arracy on test set {}'.format(accuracy_score(guesses.indices, targs.cpu())))
-
+    with open(os.path.join(output_path,'eval.txt'),'w') as f:
+        for epoch in range(EPOCHS):
+            loss = train(model, training_loader, optimizer)
+            loss_string = f'Epoch: {epoch}, Loss:  {loss.item()}'
+            f.write(loss_string)
+            print(loss_string)  
+            guess, targs = validation(model, dev_loader)
+            guesses = torch.max(guess, dim=1)
+            targets = torch.max(targs, dim=0)
+            acc_string = 'arracy on test set {}'.format(accuracy_score(guesses.indices, targs.cpu()))
+            f.write(acc_string)
+            print(acc_string)
+    torch.save(model.state_dict(), output_path)
 
