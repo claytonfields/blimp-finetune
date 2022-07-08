@@ -8,6 +8,7 @@ from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import pickle
 import os
+import sys
 
 from transformers import ElectraModel
 from transformers import ElectraTokenizer
@@ -55,11 +56,9 @@ class BlimpDataset(torch.utils.data.Dataset):
             'input_ids': torch.tensor(ids, dtype=torch.long),
             'attention_mask': torch.tensor(mask, dtype=torch.long),
             'token_type_ids': torch.tensor(token_type_ids, dtype=torch.long),
-            # 'targets': torch.tensor(self.targets[index], dtype=torch.long)
             'labels': torch.tensor(self.labels[index], dtype=torch.long)
         }
                 
-
 # Torch Utility Functions
 def loss_fn(outputs, targets):
     return torch.nn.BCELoss()(outputs, targets)
@@ -69,16 +68,11 @@ def train(model, training_loader, optimizer):
     for data in tqdm(training_loader):
       outputs = model(**{k: v.to(device) for k, v in data.items()}, return_dict=True)
       targets = data['labels'].float()
-
       optimizer.zero_grad()
-      # loss = outputs.loss
-    #   print(loss)
       loss = loss_fn(torch.sigmoid(outputs['logits'][:,1]), targets.to(device))
-      # print(loss)
       optimizer.zero_grad()
       loss.backward()
       optimizer.step()
-    # return outputs, targets.float()
     return loss
 
 def validation(model, testing_loader):
@@ -103,28 +97,46 @@ if __name__ == "__main__":
                         help = "Path to the PyTorch checkpoint.")
     parser.add_argument("-epochs", '-e',
                         default = 1,
-                        type = str,
+                        type = int,
                         required = False,
-                        help = "Number of training epochs")
+                        help = "Number of training epochs.")
+    parser.add_argument("-learning_rate", '-lr',
+                        default = 2e-05,
+                        type = float,
+                        required = False,
+                        help = 'Optimizer learning rate.')
+    parser.add_argument("-max_length", '-ml',
+                        default = 128,
+                        type = int,
+                        required = False,
+                        help = "Maximum sequence length.")
+    parser.add_argument("-batch_size", '-bs',
+                        default = 32,
+                        type = int,
+                        required = False,
+                        help = "Training and eval batch size.")
+    
+    # Parse arguments
     args = parser.parse_args()
     model_path = args.model_path
-    print(model_path)
-
+    epochs = args.epochs
+    learning_rate = args.learning_rate
+    batch_size = args.batch_size
+    max_length = args.max_length
+    
+    # Check for matching output directory
     if not os.path.exists('output'):
         os.mkdir('output')
-    model_name = os.path.split(model_path)[1]
+    model_name = model_path.rstrip('/')
+    model_name = model_name.rstrip('\\')
+    model_name = os.path.split(model_name)[1]
     print('model name: ',model_name)
     output_path = os.path.join('output',model_name)
     print('output path: ',output_path)
     if os.path.exists(output_path):
         print('output directory already exists')
-        exit()
+        sys.exit()
 
-    os.mkdir(output_path)
-
-
-    device = 'cuda' if cuda.is_available() else 'cpu'
-    print(device)
     
     # Data
     blimp_train = pd.read_csv('data/blimp_train_randomized.csv',index_col=0)
@@ -132,6 +144,9 @@ if __name__ == "__main__":
 
     blimp_dev = pd.read_csv('data/blimp_dev_randomized.csv', index_col=0)
     print(len(blimp_dev))
+    
+    # Choose device
+    device = 'cuda' if cuda.is_available() else 'cpu'
 
     # Model and Tokenizer
     model = ElectraForMultipleChoice.from_pretrained(model_path)
@@ -140,15 +155,14 @@ if __name__ == "__main__":
     tokenizer = ElectraTokenizer.from_pretrained(tokenizer_name)
 
     # Train Params
-    MAX_LEN = 128
-    BATCH_SIZE = 32
-    EPOCHS = 1
-    LEARNING_RATE = 2e-05
+    MAX_LEN = max_length
+    BATCH_SIZE = batch_size
+    EPOCHS = epochs
+    LEARNING_RATE = learning_rate
 
     # Datasets and Dataloaders
     training_data = BlimpDataset(blimp_train, tokenizer, MAX_LEN)
     dev_data = BlimpDataset(blimp_dev, tokenizer, MAX_LEN)
-    # test_data = BlimpDataset(blimp_test, tokenizer, MAX_LEN)
 
     train_params = {'batch_size': BATCH_SIZE,
                     'shuffle': True,
@@ -162,10 +176,11 @@ if __name__ == "__main__":
 
     training_loader = torch.utils.data.DataLoader(training_data, **train_params)
     dev_loader = torch.utils.data.DataLoader(dev_data, **dev_params)
-
+    
+    # Training and Eval loop
     model.to(device)    
-
     optimizer = torch.optim.Adam(params =  model.parameters(), lr=LEARNING_RATE)
+    os.mkdir(output_path)
     with open(os.path.join(output_path,'eval.txt'),'w') as f:
         for epoch in range(EPOCHS):
             loss = train(model, training_loader, optimizer)
