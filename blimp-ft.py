@@ -1,12 +1,10 @@
 # coding=utf-8
 import argparse
 import pandas as pd
-import numpy as np
 import glob
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
-import pickle
 import os
 import sys
 
@@ -136,14 +134,17 @@ if __name__ == "__main__":
     if os.path.exists(output_path):
         print('output directory already exists')
         sys.exit()
-
     
     # Data
-    blimp_train = pd.read_csv('data/blimp_train_randomized.csv',index_col=0)
-    print(len(blimp_train))
-
-    blimp_dev = pd.read_csv('data/blimp_dev_randomized.csv', index_col=0)
-    print(len(blimp_dev))
+    if not os.path.exists('data'):
+        os.mkdir('data')
+    randomized_train_path = os.path.join('data','blimp_train_randomized.csv')
+    if os.path.exists(randomized_train_path):
+        blimp_train = pd.read_csv(randomized_train_path,index_col=0)
+    
+    randomized_dev_path = os.path.join('data','blimp_dev_randomized.csv')
+    if os.path.exists(randomized_dev_path):
+        blimp_dev = pd.read_csv(randomized_dev_path, index_col=0)
     
     # Choose device
     device = 'cuda' if cuda.is_available() else 'cpu'
