@@ -134,6 +134,12 @@ if __name__ == "__main__":
     if os.path.exists(output_path):
         print('output directory already exists')
         sys.exit()
+
+    os.mkdir(output_path)
+
+
+    device = 'cuda' if cuda.is_available() else 'cpu'
+    # device = 'cpu'
     
     # Data
     if not os.path.exists('data'):
