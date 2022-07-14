@@ -10,7 +10,9 @@ import sys
 
 from transformers import ElectraModel
 from transformers import ElectraTokenizer
+from transformers import AutoTokenizer
 from transformers import ElectraForMultipleChoice
+from transformers import ElectraTokenizerFast
 
 import torch
 from torch import cuda
@@ -40,7 +42,7 @@ class BlimpDataset(torch.utils.data.Dataset):
             None,
             add_special_tokens=True,
             max_length=self.max_len,
-            pad_to_max_length=True,
+            padding=True,
             return_tensors="pt",
             truncation=True,
             return_token_type_ids=True
@@ -135,7 +137,7 @@ if __name__ == "__main__":
         print('output directory already exists')
         sys.exit()
 
-    os.mkdir(output_path)
+    # os.mkdir(output_path)
 
 
     device = 'cuda' if cuda.is_available() else 'cpu'
@@ -157,9 +159,15 @@ if __name__ == "__main__":
 
     # Model and Tokenizer
     model = ElectraForMultipleChoice.from_pretrained(model_path)
-
-    tokenizer_name = 'google/electra-small-discriminator'
-    tokenizer = ElectraTokenizer.from_pretrained(tokenizer_name)
+    
+    if os.path.exists(os.path.join(model_path,'tokenizer.json')):
+        print('Using local tokenizer.json file.')
+        # tokenizer_name = os.path.join(model_path)
+        tokenizer = ElectraTokenizerFast.from_pretrained(model_path)
+        # tokenizer = ElectraTokenizer.from_pretrained(tokenizer_name)
+    else:    
+        tokenizer_name = 'google/electra-small-discriminator'
+        tokenizer = ElectraTokenizer.from_pretrained(tokenizer_name)
 
     # Train Params
     MAX_LEN = max_length
