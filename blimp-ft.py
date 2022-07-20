@@ -166,16 +166,8 @@ if __name__ == "__main__":
     
     if os.path.exists(os.path.join(model_path,'tokenizer.json')):
         print('Using local tokenizer.json file.')
-<<<<<<< HEAD
         tokenizer_name = os.path.join(model_path,'tokenizer.json')
-        tokenizer = ElectraTokenizerFast.from_pretrained(model_path)
-        # tokenizer = PreTrainedTokenizerFast(tokenizer_file=os.path.join(model_path,'tokenizer.json'))
-        # tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-=======
-        # tokenizer_name = os.path.join(model_path)
-        tokenizer = ElectraTokenizerFast.from_pretrained(model_path)
->>>>>>> 7a3d340bc9ff3808eb0c9b8950c90ba5aca160d1
-        # tokenizer = ElectraTokenizer.from_pretrained(tokenizer_name)
+        tokenizer = ElectraTokenizerFast.from_pretrained(tokenizer_name)
     else:    
         tokenizer_name = 'google/electra-small-discriminator'
         tokenizer = ElectraTokenizer.from_pretrained(tokenizer_name)
