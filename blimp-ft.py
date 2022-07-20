@@ -13,10 +13,6 @@ from transformers import ElectraTokenizer
 from transformers import AutoTokenizer
 from transformers import ElectraForMultipleChoice
 from transformers import ElectraTokenizerFast
-<<<<<<< HEAD
-from transformers import PreTrainedTokenizerFast
-=======
->>>>>>> 7a3d340bc9ff3808eb0c9b8950c90ba5aca160d1
 
 import torch
 from torch import cuda
