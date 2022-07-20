@@ -163,7 +163,7 @@ if __name__ == "__main__":
     if os.path.exists(os.path.join(model_path,'tokenizer.json')):
         print('Using local tokenizer.json file.')
         tokenizer_name = os.path.join(model_path,'tokenizer.json')
-        tokenizer = ElectraTokenizerFast.from_pretrained(tokenizer_name)
+        tokenizer = ElectraTokenizerFast(tokenizer_file=tokenizer_name)
     else:    
         tokenizer_name = 'google/electra-small-discriminator'
         tokenizer = ElectraTokenizer.from_pretrained(tokenizer_name)
