@@ -1,23 +1,19 @@
 # coding=utf-8
 import argparse
 import pandas as pd
-import glob
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import os
 import sys
 
-from transformers import ElectraModel
-from transformers import ElectraTokenizer
-from transformers import AutoTokenizer
 from transformers import ElectraForMultipleChoice
+from transformers import ElectraTokenizer
 from transformers import ElectraTokenizerFast
 
 import torch
 from torch import cuda
 
-'''Evaluate an ELECTRA Model on BLiMP with minimal fine-tuning'''
+'''Evaluate an ELECTRA Model on BLiMP with minimal fine-tuning using a 10/90 train/test split'''
 
 
 # Torch DataSet Class
@@ -115,13 +111,6 @@ if __name__ == "__main__":
                         type = int,
                         required = False,
                         help = "Training and eval batch size.")
-    parser.add_argument("-no_output", '-no',
-                        action='store_true',
-                        help = "Boolean: write results t output file")
-    parser.add_argument('-pretrained','-pt',
-                        default = False,
-                        type = bool,
-                        required = False)
     
     
     # Parse arguments
@@ -131,7 +120,7 @@ if __name__ == "__main__":
     learning_rate = args.learning_rate
     batch_size = args.batch_size
     max_length = args.max_length
-    no_output = args.no_output
+
     
     # Check for matching output directory
     if not os.path.exists('output'):
@@ -142,16 +131,11 @@ if __name__ == "__main__":
     print('model name: ',model_name)
     output_path = os.path.join('output',model_name)
     print('output path: ',output_path)
-    if not no_output:
-        if os.path.exists(output_path):
-            print('output directory already exists')
-            sys.exit()
+  
+    if os.path.exists(output_path):
+        print('output directory already exists')
+        sys.exit()
 
-    # os.mkdir(output_path)
-
-
-    device = 'cuda' if cuda.is_available() else 'cpu'
-    # device = 'cpu'
     
     # Data
     if not os.path.exists('data'):
@@ -204,23 +188,20 @@ if __name__ == "__main__":
     # Training and Eval loop
     model.to(device)    
     optimizer = torch.optim.Adam(params =  model.parameters(), lr=LEARNING_RATE)
-    if not no_output:
-        os.mkdir(output_path)
+    os.mkdir(output_path)
     with open(os.path.join(output_path,'eval.txt'),'w') as f:
         for epoch in range(EPOCHS):
             loss = train(model, training_loader, optimizer)
-            loss_string = f'Epoch: {epoch}, Loss:  {loss.item()}'
-            if not no_output:
-                f.write(loss_string)
+            loss_string = f'Epoch: {epoch}, Loss:  {loss.item()} \n'
+            f.write(loss_string)
             print(loss_string)  
             guess, targs = validation(model, dev_loader)
             guesses = torch.max(guess, dim=1)
             targets = torch.max(targs, dim=0)
-            acc_string = 'arracy on test set {}'.format(accuracy_score(guesses.indices, targs.cpu()))
-            if not no_output:
-                f.write(acc_string)
+            acc_string = 'acurracy on test set {}'.format(accuracy_score(guesses.indices, targs.cpu()))
+            f.write(acc_string)
             print(acc_string)
     save_path = os.path.join(output_path, 'pytorch_model.bin')
-    if not no_output:
-        torch.save(model.state_dict(), save_path)
+
+    torch.save(model.state_dict(), save_path)
 
