@@ -18,13 +18,13 @@ The model is assessed to be correct if it scores the correct sentence with a hig
 
 ## Install and Running
 
-    To install, clone repository and install dependencies.
+To install, clone repository and install dependencies.
 
-    To run from command line, navigate to the blimp-finetune directory and use :
+To run from command line, navigate to the blimp-finetune directory and use :
 
         python3 blimp-ft <path to directory containing ELECTRA pytorch checkpoint>
 
-    The following options are available:
+The following options are available:
 
         '-epochs', '-e', followed by an integer value
         '-learning_rate', '-lr', followed by a float value
@@ -34,18 +34,18 @@ The model is assessed to be correct if it scores the correct sentence with a hig
 
 ## Details
 
-    By default the program runs for 1 epoch using a learning rate 2e-5, a maximum sequence length of 128 and a batch size of 32. These parameters can all be adjusted using the options described above. Currently, the 10/90 train/test split cannot be altered. The target folder must contain an ELECTRA transformer model stored as 'pytorch_model.bin' and an appropriate 'config.json' file describing its configuration. If the model uses a vocabulary different from the standard ELECTRA model the target folder must contain a corresponding 'tokenizer.json' file. If no 'tokenizer.json' is provided, the program will automatically download the tokenizer for the standard ELECTRA model's vocabulary from the HuggingFace transformer hub. This program will run considerably faster if a CUDA enabled GPU is available. 
+By default the program runs for 1 epoch using a learning rate 2e-5, a maximum sequence length of 128 and a batch size of 32. These parameters can all be adjusted using the options described above. Currently, the 10/90 train/test split cannot be altered. The target folder must contain an ELECTRA transformer model stored as 'pytorch_model.bin' and an appropriate 'config.json' file describing its configuration. If the model uses a vocabulary different from the standard ELECTRA model the target folder must contain a corresponding 'tokenizer.json' file. If no 'tokenizer.json' is provided, the program will automatically download the tokenizer for the standard ELECTRA model's vocabulary from the HuggingFace transformer hub. This program will run considerably faster if a CUDA enabled GPU is available. 
 
 ## Output
 
-    Upon completion the program will store the finetuned model to an output folder along with text file, 'eval.txt' with the loss and accuracy score for each epoch of fine-tuning. Both files will be stored inside a directory whose name is the final directory in the target path provided. 
+Upon completion the program will store the finetuned model to an output folder along with text file, 'eval.txt' with the loss and accuracy score for each epoch of fine-tuning. Both files will be stored inside a directory whose name is the final directory in the target path provided. 
 
 ## Example
 
-    To test the program a directory containing a pretrained electra model is included with the repository. To use it simply run:
+To test the program a directory containing a pretrained electra model is included with the repository. To use it simply run:
 
         python3 blimp-ft electra-example
 
-    This model should produce an accuracy score of around .95 using default settings.
+This model should produce an accuracy score of around .95 using default settings.
 
 
