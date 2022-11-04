@@ -1,11 +1,11 @@
 # BLiMP-FineTune
 
-This repository provides a python script for minimal finetuning an ELECTRA model on the BLiMP task. The BLIMP task presents an NLP model with two sentences that differ by a single edit. One of the sentences is gramattically correct and the other is not. For example:
+This repository provides a python script for minimal finetuning an ELECTRA model on the BLiMP task. The BLiMP task presents an NLP model with two sentences that differ by a single edit. One of the sentences is gramattically correct and the other is not. For example:
 
     correct sentence: "There weren't many waitresses sitting down."
     incorrect sentence: "There weren't all waitresses sitting down."
 
-The model is assessed to be correct if it scores the correct sentence with a higer probability than the incorrect one. BLIMP was originally conceived as an unsupervised task to test NLP models without the use of fine-tuning. The ELECTRA model's novel pretraining method, however, is not readily compatible with the original evaluation strategy used in BLIMP. Therefore this program runs BLIMP with only minimal fine-tuning, using only 10 percent of the data for training, to apply the task as closely as possible to its original conception. Currently, this program only supports pytorch implementations of the ELECTRA transformer model. 
+The model is assessed to be correct if it scores the correct sentence with a higer probability than the incorrect one. BLiMP was originally conceived as an unsupervised task to test NLP models without the use of fine-tuning. The ELECTRA model's novel pretraining method, however, is not readily compatible with the original evaluation strategy used in BLiMP. Therefore this program runs BLiMP with only minimal fine-tuning, using only 10 percent of the data for training, in order to apply the task as closely as possible to its original conception. Currently, this program only supports pytorch implementations of the ELECTRA transformer model. 
 
 ## Requirements
 
