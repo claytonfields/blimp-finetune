@@ -64,7 +64,9 @@ if __name__ == "__main__":
     batch_size = args.batch_size
     max_length = args.max_length
     prop_train = args.prop_train
-
+    if (prop_train <= 0 or prop_train >=1):
+        print('prop_train must be greater than 0 and less than 1') 
+        sys.exit(1)
     
     # Check for matching output directory
     if not os.path.exists('output'):
