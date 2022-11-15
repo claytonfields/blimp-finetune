@@ -13,76 +13,14 @@ from transformers import ElectraTokenizerFast
 import torch
 from torch import cuda
 
-'''Evaluate an ELECTRA Model on BLiMP with minimal fine-tuning using a 10/90 train/test split'''
+from model_utils import BlimpDataset
+from model_utils import loss_fn, train, validation
+from data_processing import process_data
 
 
-# Torch DataSet Class
-class BlimpDataset(torch.utils.data.Dataset):
 
-    def __init__(self, blimp_data, tokenizer, max_len):
-        self.tokenizer = tokenizer
-        self.a = blimp_data['sent_a']
-        self.b = blimp_data['sent_b']
-        self.labels = blimp_data['label']
-        self.len = len(blimp_data)
-        self.max_len = max_len
+'''Evaluate an ELECTRA Model on BLiMP with a supervised finetuning regime.'''
 
-    def __len__(self):
-        return self.len
-
-    def __getitem__(self, index):
-        a = self.a[index]
-        b = self.b[index]
-        inputs = self.tokenizer(
-            [a, b],
-            None,
-            add_special_tokens=True,
-            max_length=self.max_len,
-            padding='max_length',
-            return_tensors="pt",
-            truncation=False,
-            return_token_type_ids=True
-        )
-        ids = inputs['input_ids']
-        mask = inputs['attention_mask']
-        token_type_ids = inputs["token_type_ids"]
-
-
-        return {
-            'input_ids': torch.tensor(ids, dtype=torch.long),
-            'attention_mask': torch.tensor(mask, dtype=torch.long),
-            'token_type_ids': torch.tensor(token_type_ids, dtype=torch.long),
-            'labels': torch.tensor(self.labels[index], dtype=torch.long)
-        }
-                
-# Torch Utility Functions
-def loss_fn(outputs, targets):
-    return torch.nn.BCELoss()(outputs, targets)
-
-def train(model, training_loader, optimizer):
-    model.train()
-    for data in tqdm(training_loader):
-      outputs = model(**{k: v.to(device) for k, v in data.items()}, return_dict=True)
-      targets = data['labels'].float()
-      optimizer.zero_grad()
-      loss = loss_fn(torch.sigmoid(outputs['logits'][:,1]), targets.to(device))
-      optimizer.zero_grad()
-      loss.backward()
-      optimizer.step()
-    return loss
-
-def validation(model, testing_loader):
-    model.eval()
-    fin_targets=[]
-    fin_outputs=[]
-    with torch.no_grad():
-        for data in tqdm(testing_loader):
-            targets = data['labels'].to(device)
-            outputs = model(**{k: v.to(device) for k, v in data.items()})
-            outputs = torch.sigmoid(outputs['logits']).cpu().detach()
-            fin_outputs.extend(outputs)
-            fin_targets.extend(targets)
-    return torch.stack(fin_outputs), torch.stack(fin_targets)
 
 if __name__ == "__main__":
 
@@ -111,6 +49,11 @@ if __name__ == "__main__":
                         type = int,
                         required = False,
                         help = "Training and eval batch size.")
+    parser.add_argument("-prop_train", '-pt',
+                        default = .10,
+                        type = float,
+                        required = False,
+                        help = 'Proportion of data to use for training, between 0 and 1')
     
     
     # Parse arguments
@@ -120,6 +63,7 @@ if __name__ == "__main__":
     learning_rate = args.learning_rate
     batch_size = args.batch_size
     max_length = args.max_length
+    prop_train = args.prop_train
 
     
     # Check for matching output directory
@@ -131,22 +75,19 @@ if __name__ == "__main__":
     print('model name: ',model_name)
     output_path = os.path.join('output',model_name)
     print('output path: ',output_path)
-  
     if os.path.exists(output_path):
         print('output directory already exists')
         sys.exit()
 
-    
-    # Data
-    if not os.path.exists('data'):
-        os.mkdir('data')
-    randomized_train_path = os.path.join('data','blimp_train_randomized.csv')
-    if os.path.exists(randomized_train_path):
-        blimp_train = pd.read_csv(randomized_train_path,index_col=0)
-    
-    randomized_dev_path = os.path.join('data','blimp_dev_randomized.csv')
-    if os.path.exists(randomized_dev_path):
-        blimp_dev = pd.read_csv(randomized_dev_path, index_col=0)
+    # Default data split
+    if prop_train == 0.10:
+        randomized_train_path = os.path.join('data', 'default','blimp_train_randomized.csv')
+        randomized_dev_path = os.path.join('data','default','blimp_dev_randomized.csv')
+    # Custom datasplit
+    else:
+        randomized_train_path, randomized_dev_path = process_data(prop_train)
+    blimp_train = pd.read_csv(randomized_train_path,index_col=0)
+    blimp_dev = pd.read_csv(randomized_dev_path, index_col=0)
     
     # Choose device
     device = 'cuda' if cuda.is_available() else 'cpu'
@@ -191,11 +132,11 @@ if __name__ == "__main__":
     os.mkdir(output_path)
     with open(os.path.join(output_path,'eval.txt'),'w') as f:
         for epoch in range(EPOCHS):
-            loss = train(model, training_loader, optimizer)
+            loss = train(model, training_loader, optimizer, device)
             loss_string = f'Epoch: {epoch}, Loss:  {loss.item()} \n'
             f.write(loss_string)
             print(loss_string)  
-            guess, targs = validation(model, dev_loader)
+            guess, targs = validation(model, dev_loader, device)
             guesses = torch.max(guess, dim=1)
             targets = torch.max(targs, dim=0)
             acc_string = 'acurracy on test set {}'.format(accuracy_score(guesses.indices, targs.cpu()))
