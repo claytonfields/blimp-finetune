@@ -24,6 +24,10 @@ To run from command line, navigate to the blimp-finetune directory and use :
 
         python3 blimp-ft <path to target directory containing ELECTRA pytorch checkpoint>
 
+To run using the pretrained ELECTRA-Small model from the HuggingFace transformer hub:
+
+        python3 blimp-ft pretrained
+
 The following options are available:
 
         '-epochs', '-e', followed by an integer value
@@ -35,7 +39,7 @@ The following options are available:
 
 ## Details
 
-By default the program runs for 1 epoch using a learning rate 2e-5, a maximum sequence length of 128 and a batch size of 32. These parameters can all be adjusted using the options described above. By default the program runs a 10/90 train/test split. To alter the data split use the -prop_train option flollowed by the desireed proportion for the train split.  The target directory must contain an ELECTRA transformer model stored as 'pytorch_model.bin' and an appropriate 'config.json' file describing its configuration. Any directory from the HuggingFace transformer hub containing an ELECTRA model is also a valid input.  If the model uses a vocabulary different from the standard ELECTRA model, the target directory must contain a corresponding 'tokenizer.json' file. If no 'tokenizer.json' is provided, the program will automatically download the tokenizer for the standard ELECTRA model's vocabulary from the HuggingFace transformer hub. This program will run considerably faster if a CUDA enabled GPU is available. Note that the generating a new train/test split add to the program's runtime.
+By default the program runs for 1 epoch using a learning rate 2e-5, a maximum sequence length of 128 and a batch size of 32. These parameters can all be adjusted using the options described above. By default the program runs a 10/90 train/test split. To alter the data split use the -prop_train option flollowed by the desireed proportion for the train split.  The target directory must contain an ELECTRA transformer model stored as 'pytorch_model.bin' and an appropriate 'config.json' file describing its configuration. Any directory from the HuggingFace transformer hub containing an ELECTRA model is also a valid input.  If the model uses a vocabulary different from the standard ELECTRA model, the target directory must contain a corresponding 'tokenizer.json' file. If no 'tokenizer.json' is provided, the program will automatically download the tokenizer for the standard ELECTRA model's vocabulary from the HuggingFace transformer hub. This program will run considerably faster if a CUDA enabled GPU is available. Note that the generating a new train/test split will add to the program's runtime.
 
 ## Output
 
